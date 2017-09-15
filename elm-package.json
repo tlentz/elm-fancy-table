@@ -1,7 +1,6 @@
 {
-    "version": "1.0.0",
+    "version": "1.0.1",
     "summary": "A table with the ability to resize, reorder, and hide columns.",
-    "description": "A table with the ability to resize, reorder, and hide columns.",
     "repository": "https://github.com/tlentz/elm-fancy-table.git",
     "license": "BSD3",
     "source-directories": [
