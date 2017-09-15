@@ -44,6 +44,9 @@ import Html.Attributes exposing (style, class)
 import Html.Events exposing (on)
 import Mouse exposing (Position)
 import Json.Decode as Decode
+import ContextMenu exposing (..)
+import Color exposing (Color)
+import FontAwesome
 
 {-| The base model of the table
 -}
@@ -58,6 +61,7 @@ type alias Model =
     , resizeHeader : Maybe Drag
     , reorderHeader : Maybe Drag
     , settings : Settings
+    , contextMenu : ContextMenuModel
     }
 
 {-| Represents the table settings to be able to resize/reorder columns
@@ -65,6 +69,7 @@ type alias Model =
 type alias Settings =
     { resizeColumns : Bool
     , reorderColumns : Bool
+    , hideColumns : Bool
     }
 
 {-| Default Header Settings
@@ -73,6 +78,7 @@ defaultSettings : Settings
 defaultSettings =
     { resizeColumns = True
     , reorderColumns = True
+    , hideColumns = True
     }
 
 {-| Set the table settings
@@ -82,9 +88,14 @@ setSettings s (FancyTable ({ settings } as model)) =
     FancyTable { model | settings = s }
 
 {-| Represents the content that goes into your THead
+# index = order indes
+# name = the string name for the column
+# content = html inside the header
+# settings = settings for this header
 -}
 type alias Header =
     { index : Int
+    , name : String
     , content : Html Msg
     , settings : HeaderSettings
     }
@@ -95,6 +106,7 @@ type alias HeaderSettings =
     { minWidth : Int
     , maxWidth : Int
     , width : Int
+    , isVisible : Bool
     }
 
 {-| Default Header Settings
@@ -104,6 +116,7 @@ defaultHeaderSettings =
     { minWidth = 140
     , maxWidth = 1000
     , width = 140
+    , isVisible = True
     }
 
 type alias TableRow = List TableData
@@ -131,6 +144,32 @@ type Msg
     | ReorderDragStart Int Position
     | ReorderDragAt Position
     | ReorderDragEnd Position
+    | ToggleHeader String
+    | ContextMenuMsg (ContextMenu.Msg Context)
+
+type Context
+    = HeaderContext
+
+type ContextMenuModel = ContextMenuModel
+    { menu : ContextMenu Context
+    , config : ContextMenu.Config
+    , message : String
+    }
+
+{-| Context Menu Config for winChrome
+-}
+winChrome : ContextMenu.Config
+winChrome =
+  { defaultConfig
+  | direction = RightBottom
+  , overflowX = Shift
+  , overflowY = Mirror
+  , containerColor = Color.white
+  , hoverColor = Color.lightGray
+  , invertText = False
+  , cursor = Arrow
+  , rounded = False
+  }
 
 {-| Sets the min width of the header when rendered.
 -}
@@ -171,17 +210,18 @@ setTableHeadersFromStrings : HeaderSettings -> List String -> FancyTable -> Fanc
 setTableHeadersFromStrings settings headerStrings (FancyTable ({ headers } as model)) =
     let
         tableHeaders =
-            List.indexedMap (\index content -> { index = index, content = Html.text content, settings = settings }) headerStrings
+            List.indexedMap (\index content -> { index = index, name = content, content = Html.text content, settings = settings }) headerStrings
     in
         FancyTable { model | headers = tableHeaders }
 
-{-| Sets the table headers from a list of Html Msg (content)
+{-| Sets the table headers from a list of (String, Html Msg) (content)
+where the String is the header name and the Html Msg is the header content
 -}
-setTableHeadersFromHtml : HeaderSettings -> List (Html Msg) -> FancyTable -> FancyTable
-setTableHeadersFromHtml settings headerHtmlMsgs (FancyTable ({ headers } as model)) =
+setTableHeadersFromHtml : HeaderSettings -> List (String, (Html Msg)) -> FancyTable -> FancyTable
+setTableHeadersFromHtml settings headerList (FancyTable ({ headers } as model)) =
     let
         tableHeaders =
-            List.indexedMap (\index content -> { index = index, content = content, settings = settings }) headerHtmlMsgs
+            List.indexedMap (\index content -> { index = index, name = (Tuple.first content), content = (Tuple.second content), settings = settings }) headerList
     in
         FancyTable { model | headers = tableHeaders }
 
@@ -269,6 +309,8 @@ update (FancyTable model) msg =
                 ( FancyTable newModel
                 , Cmd.none
                 )
+        _ ->
+            ( FancyTable model, Cmd.none)
 
 updateDrag : Maybe Drag -> Position -> Maybe Drag
 updateDrag headerDrag position =
@@ -386,17 +428,39 @@ onDrag : (Mouse.Position -> Msg) -> Attribute Msg
 onDrag msg =
     on "mousedown" (Decode.map msg Mouse.position)
 
+-- updateContextMenu : FancyTable -> ContextMenu
+-- updateContextMenu (FancyTable model) = ContextMenu.init
+
+toItemGroups : FancyTable -> Context ->  List (List (ContextMenu.Item, Msg))
+toItemGroups (FancyTable model) context =
+    case context of
+        HeaderContext ->
+           [ List.map getHeaderContextItem model.headers ]
+
+getHeaderContextItem : Header -> (ContextMenu.Item, Msg)
+getHeaderContextItem header =
+    ((ContextMenu.item header.name) |> if header.settings.isVisible then ContextMenu.icon FontAwesome.check Color.blue else ContextMenu.icon FontAwesome.eye Color.white
+    , ToggleHeader header.name
+    )
+
 {-| Returns default fancy table which is an empty table
 -}
 init : FancyTable
 init =
     let
+        (contextMenu, msg) = ContextMenu.init
+        contextMenuModel = ContextMenuModel
+            { menu = contextMenu
+            , config = winChrome
+            , message = ""
+            }
         model = 
             { headers = []
             , rows = []
             , resizeHeader = Nothing
             , reorderHeader = Nothing
             , settings = defaultSettings
+            , contextMenu = contextMenuModel
             }
     in
         FancyTable model
@@ -415,6 +479,11 @@ view (FancyTable model) =
                               [ thead
                               , tbody
                               ]
+                 , ContextMenu.view
+                    model.contextMenu.config
+                    ContextMenuMsg
+                    (toItemGroups (FancyTable model) HeaderContext)
+                    model.contextMenu.menu
                  ]
 
 getTHead : Model -> Html Msg
