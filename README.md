@@ -4,6 +4,12 @@
 elm package install tlentz/elm-fancy-table
 ```
 
+## Description
+An elm package for an html table that has additional features such as:
+* Resizing columns
+* Reordering columns
+* Hiding/Showing columns
+
 ## Usage
 
 The `FancyTable.init` function creates a default Fancy Table which an empty list of headers, an empty list of rows, and both resizeColumns and reorderColumns set to True.
