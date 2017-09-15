@@ -1,0 +1,64 @@
+* {
+    margin: 0px;
+    padding: 0px;
+  }
+  
+  div {
+    &.table-container {
+      margin: auto;
+      width: 80%;
+      margin-top: 10%;
+    }
+    &.fancy-table-wrapper {
+      overflow: scroll;
+      width: 100%;
+    }
+  }
+  
+  table.fancy-table-table {
+    overflow: scroll;
+    border-spacing: 0;
+    thead.fancy-table-thead th.fancy-table-th {
+      height: 25px;
+      border: solid 1px black;
+      overflow: hidden;
+      white-space: no-wrap;
+      -webkit-touch-callout: none;
+      /* iOS Safari */
+      -webkit-user-select: none;
+      /* Safari */
+      -khtml-user-select: none;
+      /* Konqueror HTML */
+      -moz-user-select: none;
+      /* Firefox */
+      -ms-user-select: none;
+      /* Internet Explorer/Edge */
+      user-select: none;
+      /* Non-prefixed version, currently supported by Chrome and Opera */
+      div {
+        &.fancy-table-header-content {
+          display: inline-block;
+          width: calc(100% - 3px);
+          height: 100%;
+          text-align: center;
+          &.reorder {
+            cursor: all-scroll;
+          }
+        }
+        &.fancy-table-header-grip {
+          width: 3px;
+          position: relative;
+          z-index: 88;
+          float: right;
+          height: 100%;
+          background-color: black;
+          &.resize {
+            cursor: col-resize;
+          }
+        }
+      }
+    }
+    tbody.fancy-table-tbody tr.fancy-table-tr td.fancy-table-td {
+      border: solid 1px black;
+    }
+  }
