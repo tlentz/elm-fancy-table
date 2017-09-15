@@ -15,7 +15,7 @@ The `FancyTable.init` function creates a default Fancy Table which an empty list
         ]
     myTable =
         FancyTable.init
-            |> setSettings { resizeColumns = True, reorderColumns = False }
+            |> setSettings { resizeColumns = True, reorderColumns = False, hideColumns = True }
             |> setTableHeadersFromStrings defaultHeaderSettings ["Red", "Blue", "Yellow"]
             |> setTableRows (List.map (\d -> getTableRowFromStrings d) tableData)
 ```

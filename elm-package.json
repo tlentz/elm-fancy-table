@@ -1,6 +1,7 @@
 {
     "version": "1.0.0",
-    "summary": "An elm package for a table with the ability to resize and reorder columns.",
+    "summary": "An elm package for a table with the ability to resize, reorder, and hide columns.",
+    "description": "An elm package for a table with the ability to resize, reorder, and hide columns.",
     "repository": "https://github.com/tlentz/elm-fancy-table.git",
     "license": "BSD3",
     "source-directories": [

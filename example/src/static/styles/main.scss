@@ -2,7 +2,7 @@
     margin: 0px;
     padding: 0px;
   }
-  
+
   div {
     &.table-container {
       margin: auto;
@@ -11,7 +11,9 @@
     }
     &.fancy-table-wrapper {
       overflow: scroll;
-      width: 100%;
+      width: 60%;
+      margin: auto;
+      margin-top: 25%;
     }
   }
   

@@ -124,6 +124,7 @@ type alias TableRow = List TableData
 type alias TableData =
     { index : Int
     , content : Html Msg
+    , isVisible : Bool
     }
 
 {-| Keeps track of the Header that is being dragged
@@ -144,7 +145,7 @@ type Msg
     | ReorderDragStart Int Position
     | ReorderDragAt Position
     | ReorderDragEnd Position
-    | ToggleHeader String
+    | ToggleHeader Int
     | ContextMenuMsg (ContextMenu.Msg Context)
 
 type Context
@@ -153,7 +154,6 @@ type Context
 type alias ContextMenuModel =
     { menu : ContextMenu Context
     , config : ContextMenu.Config
-    , message : String
     }
 
 {-| Context Menu Config for winChrome
@@ -237,7 +237,7 @@ getTableRowFromStrings : List String -> TableRow
 getTableRowFromStrings colStrings =
     let
         columns =
-            List.indexedMap (\index content -> { index = index, content = (Html.text content) }) colStrings
+            List.indexedMap (\index content -> { index = index, content = (Html.text content), isVisible = True }) colStrings
     in
         columns
 
@@ -247,7 +247,7 @@ getTableRowFromHtml : List (Html Msg) -> TableRow
 getTableRowFromHtml colStrings =
     let
         columns =
-            List.indexedMap (\index content -> { index = index, content = content }) colStrings
+            List.indexedMap (\index content -> { index = index, content = content, isVisible = True }) colStrings
     in
         columns
 
@@ -320,11 +320,42 @@ update (FancyTable model) msg =
                 newModel = { model | contextMenu = newContextMenu }
             in
                 ( FancyTable newModel
+                , Cmd.map ContextMenuMsg cmd
+                )
+        ToggleHeader index ->
+            let
+                newModel = updateHeaderVisibility index model
+            in
+                ( FancyTable newModel
                 , Cmd.none
                 )
-                
-        _ ->
-            ( FancyTable model, Cmd.none)
+
+updateHeaderVisibility : Int -> Model -> Model
+updateHeaderVisibility index model =
+    let
+        headers = model.headers
+        rows = model.rows
+        newHeaders = 
+            List.map (\h ->
+                        if h.index == index then
+                            let
+                                settings = h.settings
+                            in
+                                { h | settings = { settings | isVisible = not settings.isVisible } }
+                        else
+                            h
+                     ) headers
+        newRows =
+            List.map (\r ->
+                        List.map (\td ->
+                                    if td.index == index then
+                                        { td | isVisible = not td.isVisible }
+                                    else
+                                        td  
+                                 ) r
+                     ) rows
+    in
+        { model | headers = newHeaders, rows = newRows }
 
 updateDrag : Maybe Drag -> Position -> Maybe Drag
 updateDrag headerDrag position =
@@ -454,7 +485,7 @@ toItemGroups model context =
 getHeaderContextItem : Header -> (ContextMenu.Item, Msg)
 getHeaderContextItem header =
     ((ContextMenu.item header.name) |> if header.settings.isVisible then ContextMenu.icon FontAwesome.check Color.blue else ContextMenu.icon FontAwesome.eye Color.white
-    , ToggleHeader header.name
+    , ToggleHeader header.index
     )
 
 {-| Returns default fancy table which is an empty table
@@ -466,7 +497,6 @@ init =
         contextMenuModel =
             { menu = contextMenu
             , config = winChrome
-            , message = ""
             }
         model = 
             { headers = []
@@ -493,14 +523,13 @@ view (FancyTable model) =
                               [ thead
                               , tbody
                               ]
-                 , Html.div [ ContextMenu.open ContextMenuMsg HeaderContext ]
-                    [ (ContextMenu.view model.contextMenu.config ContextMenuMsg (toItemGroups model) model.contextMenu.menu) ]
+                 , Html.div [ class "fancy-table-context-menu" ] [ (ContextMenu.view model.contextMenu.config ContextMenuMsg (toItemGroups model) model.contextMenu.menu) ]
                  ]
 
 getTHead : Model -> Html Msg
 getTHead model =
-    Html.thead [ class "fancy-table-thead" ] <|
-        List.map (\h -> getTableHeader model h) model.headers
+    Html.thead [ class "fancy-table-thead", ContextMenu.open ContextMenuMsg HeaderContext ]
+            <| List.map (\h -> getTableHeader model h) (List.filter (\h -> h.settings.isVisible == True ) model.headers)
 
 getTbody : Model -> Html Msg
 getTbody model =
@@ -510,7 +539,7 @@ getTbody model =
 getTableRow : Model -> TableRow -> Html Msg
 getTableRow model rows =
     Html.tr [ class "fancy-table-tr" ] <|
-        List.map (\td -> getTableTd model td) rows
+        List.map (\td -> getTableTd model td) (List.filter (\td -> td.isVisible == True) rows)
 
 getTableTd : Model -> TableData -> Html Msg
 getTableTd model td = 
