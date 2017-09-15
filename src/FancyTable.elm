@@ -150,7 +150,7 @@ type Msg
 type Context
     = HeaderContext
 
-type ContextMenuModel = ContextMenuModel
+type alias ContextMenuModel =
     { menu : ContextMenu Context
     , config : ContextMenu.Config
     , message : String
@@ -268,8 +268,10 @@ subscriptions (FancyTable model) =
                     Sub.none
                 _ ->
                     Sub.batch [ Mouse.moves ReorderDragAt, Mouse.ups ReorderDragEnd ]
+        hideCmds =
+            Sub.map ContextMenuMsg (ContextMenu.subscriptions model.contextMenu.menu)
     in
-        Sub.batch [ resizeCmds, reorderCmds ]
+        Sub.batch [ resizeCmds, reorderCmds, hideCmds]
 
 {-| takes a model and a message and applies it to create an updated model
 -}
@@ -309,6 +311,18 @@ update (FancyTable model) msg =
                 ( FancyTable newModel
                 , Cmd.none
                 )
+        ContextMenuMsg msg ->
+            let
+                (contextMenu, cmd) =
+                    ContextMenu.update msg model.contextMenu.menu
+                cm = model.contextMenu
+                newContextMenu = { cm | menu = contextMenu }
+                newModel = { model | contextMenu = newContextMenu }
+            in
+                ( FancyTable newModel
+                , Cmd.none
+                )
+                
         _ ->
             ( FancyTable model, Cmd.none)
 
@@ -431,8 +445,8 @@ onDrag msg =
 -- updateContextMenu : FancyTable -> ContextMenu
 -- updateContextMenu (FancyTable model) = ContextMenu.init
 
-toItemGroups : FancyTable -> Context ->  List (List (ContextMenu.Item, Msg))
-toItemGroups (FancyTable model) context =
+toItemGroups : Model -> Context ->  List (List (ContextMenu.Item, Msg))
+toItemGroups model context =
     case context of
         HeaderContext ->
            [ List.map getHeaderContextItem model.headers ]
@@ -449,7 +463,7 @@ init : FancyTable
 init =
     let
         (contextMenu, msg) = ContextMenu.init
-        contextMenuModel = ContextMenuModel
+        contextMenuModel =
             { menu = contextMenu
             , config = winChrome
             , message = ""
@@ -479,11 +493,8 @@ view (FancyTable model) =
                               [ thead
                               , tbody
                               ]
-                 , ContextMenu.view
-                    model.contextMenu.config
-                    ContextMenuMsg
-                    (toItemGroups (FancyTable model) HeaderContext)
-                    model.contextMenu.menu
+                 , Html.div [ ContextMenu.open ContextMenuMsg HeaderContext ]
+                    [ (ContextMenu.view model.contextMenu.config ContextMenuMsg (toItemGroups model) model.contextMenu.menu) ]
                  ]
 
 getTHead : Model -> Html Msg

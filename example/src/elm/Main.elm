@@ -33,7 +33,7 @@ init =
       ]
     fancyTable 
       = FancyTable.init
-        |> setSettings { resizeColumns = True, reorderColumns = True }
+        |> setSettings { resizeColumns = True, reorderColumns = True, hideColumns = True }
         |> setTableHeadersFromStrings defaultHeaderSettings ["Red", "Blue", "Yellow", "Green", "Pink", "Purple"]
         |> setTableRows (List.map(\d -> getTableRowFromStrings d) tableData)
       
