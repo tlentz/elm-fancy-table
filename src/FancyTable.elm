@@ -335,27 +335,58 @@ updateHeaderVisibility index model =
     let
         headers = model.headers
         rows = model.rows
-        newHeaders = 
-            List.map (\h ->
-                        if h.index == index then
-                            let
-                                settings = h.settings
-                            in
-                                { h | settings = { settings | isVisible = not settings.isVisible } }
-                        else
-                            h
-                     ) headers
-        newRows =
-            List.map (\r ->
-                        List.map (\td ->
-                                    if td.index == index then
-                                        { td | isVisible = not td.isVisible }
-                                    else
-                                        td  
-                                 ) r
-                     ) rows
+        visible =
+            List.filter (\h -> h.settings.isVisible == True) headers
+        (updatedHeaders, updatedRows) =
+            case List.length visible of
+                1 ->
+                    let
+                        newHeaders =
+                            List.map (\h ->
+                                        if h.index == index then
+                                            let
+                                                settings = h.settings
+                                            in
+                                                { h | settings = { settings | isVisible = True } }
+                                        else
+                                            h
+                                    ) headers
+                        newRows =
+                            List.map (\r ->
+                                        List.map (\td ->
+                                                    if td.index == index then
+                                                        { td | isVisible = True }
+                                                    else
+                                                        td  
+                                                ) r
+                                    ) rows
+                    in
+                        (newHeaders, newRows)
+                _ ->
+                    let
+                        newHeaders =
+                            List.map (\h ->
+                                        if h.index == index then
+                                            let
+                                                settings = h.settings
+                                            in
+                                                { h | settings = { settings | isVisible = not settings.isVisible } }
+                                        else
+                                            h
+                                    ) headers
+                        newRows =
+                            List.map (\r ->
+                                        List.map (\td ->
+                                                    if td.index == index then
+                                                        { td | isVisible = not td.isVisible }
+                                                    else
+                                                        td  
+                                                ) r
+                                    ) rows
+                    in
+                        (newHeaders, newRows)
     in
-        { model | headers = newHeaders, rows = newRows }
+        { model | headers = updatedHeaders, rows = updatedRows }
 
 updateDrag : Maybe Drag -> Position -> Maybe Drag
 updateDrag headerDrag position =
