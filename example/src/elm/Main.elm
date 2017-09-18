@@ -1,7 +1,6 @@
 module Main exposing (..)
 import Html exposing (..)
 import Html.Attributes exposing (..)
-import Html.Events exposing ( onClick )
 import FancyTable exposing (..)
 
 -- APP
@@ -31,10 +30,14 @@ init =
       , ["7", "8", "9", "10", "11", "12"]
       , ["13", "14", "15", "16", "17" , "18"]
       ]
+    headerColors = ["Red", "Blue", "Yellow", "Green", "Pink", "Purple"]
+    headers =
+      List.map (\c -> (c, Html.span [ style [ ("background-color", c), ("display", "block"), ("height", "100%") ] ] [ Html.text c ])
+               ) headerColors
     fancyTable 
       = FancyTable.init
         |> setSettings { resizeColumns = True, reorderColumns = True, hideColumns = True }
-        |> setTableHeadersFromStrings defaultHeaderSettings ["Red", "Blue", "Yellow", "Green", "Pink", "Purple"]
+        |> setTableHeadersFromHtml defaultHeaderSettings headers
         |> setTableRows (List.map(\d -> getTableRowFromStrings d) tableData)
       
     model =
