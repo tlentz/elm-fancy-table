@@ -37,7 +37,7 @@ init =
     fancyTable 
       = FancyTable.init
         |> setSettings { resizeColumns = True, reorderColumns = True, hideColumns = True }
-        |> setTableHeadersFromHtml defaultHeaderSettings headers
+        |> setTableHeadersFromHtml { defaultHeaderSettings | minWidth = 75 } headers
         |> setTableRows (List.map(\d -> getTableRowFromStrings d) tableData)
       
     model =
