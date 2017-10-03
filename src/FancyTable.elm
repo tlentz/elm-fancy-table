@@ -447,7 +447,7 @@ findOffset index pickles headers =
                 pickles
             else
                 pickles * (-1)
-        moves = countMoves newPickles headers 0
+        moves = countMoves newPickles newHeaders 0
     in
         if pickles > 0 then
             moves
